@@ -1,6 +1,7 @@
 package com.cn.login;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.DisabledAccountException;
@@ -11,14 +12,21 @@ import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.UnauthorizedException;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.cn.freamarker.web.controller.BaseController;
+
 @RequestMapping("/login")
 @Controller
-public class LoginController {
+public class LoginController extends BaseController{
+	
 	/** 
 	 * 实际的登录代码 
 	 * 如果登录成功，跳转至首页；登录失败，则将失败信息反馈对用户 
@@ -35,12 +43,16 @@ public class LoginController {
 	    System.out.println(userName);  
 	    System.out.println(password);  
 	    UsernamePasswordToken token = new UsernamePasswordToken(userName, password);  
-	    token.setRememberMe(true);  
-	    Subject subject = SecurityUtils.getSubject();  
+	    token.setRememberMe(false);  
 	    try {  
-	        subject.login(token);  
-	        if (subject.isAuthenticated()) {  
-	            return "redirect:index";  
+	    	DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager) SecurityUtils.getSecurityManager();
+	        DefaultWebSessionManager sessionManager = (DefaultWebSessionManager) securityManager.getSessionManager();
+	        SecurityUtils.getSubject().login(token);
+	        if (SecurityUtils.getSubject().isAuthenticated()) {  
+	        	Session session = SecurityUtils.getSubject().getSession();
+	        	System.out.println(session.getId()+"==========");
+	        	session.setAttribute("userid", userName);
+	            return "redirect:index.do";  
 	        } else {  
 	            return "redirect:/";  
 	        }  
@@ -72,7 +84,15 @@ public class LoginController {
 	        msg = "您没有得到相应的授权！" + e.getMessage();  
 	        model.addAttribute("message", msg);  
 	        System.out.println(msg);  
-	    }  
+	    }
 	    return "redirect:/";  
 	}  
+	
+	@RequestMapping("/index")
+	public String index(){
+		Subject subject = SecurityUtils.getSubject();
+		System.out.println(subject.getSession().getAttribute("userid"));
+		setAttribuate("sessionid", subject.getSession().getId());
+		return "index";
+	}
 }

@@ -12,8 +12,35 @@
        http://www.springframework.org/schema/aop
        http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
        ">
-	<!-- 缓存管理 -->
+	<!-- 缓存管理 默认缓存
 	<bean id="cacheManager" class="org.apache.shiro.cache.MemoryConstrainedCacheManager"></bean>
+	-->
+	<!-- 使用redis缓存session -->
+	<!-- shiro redisManager -->  
+	<bean id="redisManager" class="com.cn.freamarker.session.RedisManager">  
+	    <property name="host" value="192.168.10.20"/>  
+	    <property name="port" value="6379"/>  
+	    <property name="expire" value="1800"/>  
+	    <!-- optional properties:  
+	    <property name="timeout" value="10000"/>  
+	    <property name="password" value="123456"/>  
+	    -->  
+	</bean>  
+	
+	<!-- 重写sessionDao -->
+	<bean id="redisSessionDao" class="com.cn.freamarker.session.RedisSessionDao">
+		<property name="redisManager" ref="redisManager"></property>
+	</bean>
+	
+	<!-- sessionManager -->  
+	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">  
+	    <property name="sessionDAO" ref="redisSessionDao" />  
+	</bean>
+	
+	<!-- cacheManager -->  
+	<bean id="cacheManager" class="com.cn.freamarker.session.RedisCacheManager">  
+	    <property name="redisManager" ref="redisManager" />  
+	</bean>  
 	
 	<!-- 使用Shiro自带的JdbcRealm类 指定密码匹配所需要用到的加密对象 指定存储用户、角色、权限许可的数据源及相关查询语句 -->
 	<bean id="jdbcRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
@@ -31,6 +58,7 @@
 	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
 		<property name="realm" ref="jdbcRealm"></property>
 		<property name="cacheManager" ref="cacheManager"></property>
+		<property name="sessionManager" ref="sessionManager" /> 
 	</bean>
 	
 	<!-- Shiro主过滤器本身功能十分强大，其强大之处就在于它支持任何基于URL路径表达式的、自定义的过滤器的执行 Web应用中，Shiro可控制的Web请求必须经过Shiro主过滤器的拦截，Shiro对基于Spring的Web应用提供了完美的支持 -->
