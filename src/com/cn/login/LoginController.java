@@ -1,5 +1,6 @@
 package com.cn.login;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -13,6 +14,9 @@ import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.SimpleSession;
+import org.apache.shiro.session.mgt.SimpleSessionFactory;
+import org.apache.shiro.session.mgt.eis.MemorySessionDAO;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -26,6 +30,8 @@ import com.cn.freamarker.web.controller.BaseController;
 @RequestMapping("/login")
 @Controller
 public class LoginController extends BaseController{
+	
+	@Resource MemorySessionDAO sessionDAO;
 	
 	/** 
 	 * 实际的登录代码 
@@ -43,13 +49,15 @@ public class LoginController extends BaseController{
 	    System.out.println(userName);  
 	    System.out.println(password);  
 	    UsernamePasswordToken token = new UsernamePasswordToken(userName, password);  
-	    token.setRememberMe(false);  
 	    try {  
-	    	DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager) SecurityUtils.getSecurityManager();
-	        DefaultWebSessionManager sessionManager = (DefaultWebSessionManager) securityManager.getSessionManager();
 	        SecurityUtils.getSubject().login(token);
 	        if (SecurityUtils.getSubject().isAuthenticated()) {  
 	        	Session session = SecurityUtils.getSubject().getSession();
+	        	SimpleSession simpleSession = new SimpleSession();
+	        	System.out.println(session.getHost());
+	        	simpleSession.setHost(session.getHost());
+	        	//FIXME 之前登录后依然sessionid在变更，是因为没有保存session
+	        	sessionDAO.create(simpleSession);
 	        	System.out.println(session.getId()+"==========");
 	        	session.setAttribute("userid", userName);
 	            return "redirect:index.do";  

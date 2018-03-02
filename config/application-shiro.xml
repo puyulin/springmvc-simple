@@ -27,38 +27,40 @@
 	    -->  
 	</bean>  
 	
-	<!-- 重写sessionDao -->
+	<!-- 重写sessionDao 
 	<bean id="redisSessionDao" class="com.cn.freamarker.session.RedisSessionDao">
 		<property name="redisManager" ref="redisManager"></property>
 	</bean>
-	
-	<!-- sessionManager -->  
-	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">  
-	    <property name="sessionDAO" ref="redisSessionDao" />  
+	-->
+	<!-- sessionManager  -->
+	<bean id="sessionDAO" class="org.apache.shiro.session.mgt.eis.MemorySessionDAO" >
 	</bean>
-	
-	<!-- cacheManager -->  
+	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">  
+	    <property name="sessionDAO" ref="sessionDAO"/>  
+	</bean>
+	<!-- cacheManager   
 	<bean id="cacheManager" class="com.cn.freamarker.session.RedisCacheManager">  
 	    <property name="redisManager" ref="redisManager" />  
 	</bean>  
-	
+	-->
 	<!-- 使用Shiro自带的JdbcRealm类 指定密码匹配所需要用到的加密对象 指定存储用户、角色、权限许可的数据源及相关查询语句 -->
 	<bean id="jdbcRealm" class="org.apache.shiro.realm.jdbc.JdbcRealm">
 		<property name="permissionsLookupEnabled" value="true"></property>
 		<property name="dataSource" ref="dataSource"></property>
 		<property name="authenticationQuery"
 			value="SELECT password FROM t_dev_user WHERE name = ?"></property>
+		<!-- 
 		<property name="userRolesQuery"
 			value="SELECT t2.role from t_dev_role_user  t1 left join t_dev_role  t2 ON t2.id=t1.roleid left join t_dev_user t3  ON t3.id=t1.userid WHERE t3.`name`=?"></property>
-		<!-- <property name="permissionsQuery"
+		<property name="permissionsQuery"
 			value="SELECT permission_name FROM sec_role_permission left join sec_role using(role_id) left join sec_permission using(permission_id) WHERE role_name = ?"></property> -->
 	</bean>
 	
 	<!-- Shiro安全管理器 -->
 	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
 		<property name="realm" ref="jdbcRealm"></property>
-		<property name="cacheManager" ref="cacheManager"></property>
-		<property name="sessionManager" ref="sessionManager" /> 
+		<!-- <property name="cacheManager" ref="cacheManager"></property> -->
+		<property name="sessionManager" ref="sessionManager" />
 	</bean>
 	
 	<!-- Shiro主过滤器本身功能十分强大，其强大之处就在于它支持任何基于URL路径表达式的、自定义的过滤器的执行 Web应用中，Shiro可控制的Web请求必须经过Shiro主过滤器的拦截，Shiro对基于Spring的Web应用提供了完美的支持 -->
