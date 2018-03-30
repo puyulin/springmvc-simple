@@ -2,12 +2,14 @@ package com.cn.freamarker.session;
 
 import java.util.Set;
 
+import org.springframework.stereotype.Component;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 public class RedisManager {
-	private String host = "192.168.10.20";  
+	private String host = "172.16.139.200";  
     
     private int port = 6379;  
       
@@ -22,7 +24,7 @@ public class RedisManager {
     private static JedisPool jedisPool = null;  
       
     public RedisManager(){  
-          
+    	init();
     }  
       
     /** 
@@ -192,7 +194,7 @@ public class RedisManager {
     }  
     
     public static void main(String[] args) {
-		Jedis jedis = new Jedis("192.168.10.20");
+		Jedis jedis = new Jedis("172.16.139.200");
 		jedis.set("test", "hello word");
 		System.out.println(jedis.get("test"));
 	}

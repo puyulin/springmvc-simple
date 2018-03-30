@@ -74,6 +74,7 @@ public class SerializeUtils {
                 result =  byteStream.toByteArray();  
             }  
             catch (Throwable ex) {  
+            	ex.printStackTrace();
                 throw new Exception("Failed to serialize", ex);  
             }  
         } catch (Exception ex) {  

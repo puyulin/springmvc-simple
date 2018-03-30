@@ -9,6 +9,9 @@
 </head>  
 <body>  
     <h1>index page</h1>  
-    <h2>${sessionid}</h2>
+    <h2><%=request.getSession().getAttribute("userBean") %>
+    	----
+    	<%=request.getSession().getId() %>
+    </h2>
 </body>  
 </html>  

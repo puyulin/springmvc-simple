@@ -1,37 +1,22 @@
 package com.cn.login;
 
-import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.DisabledAccountException;
-import org.apache.shiro.authc.ExcessiveAttemptsException;
-import org.apache.shiro.authc.ExpiredCredentialsException;
-import org.apache.shiro.authc.IncorrectCredentialsException;
-import org.apache.shiro.authc.LockedAccountException;
-import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authz.UnauthorizedException;
-import org.apache.shiro.session.Session;
-import org.apache.shiro.session.mgt.SimpleSession;
-import org.apache.shiro.session.mgt.SimpleSessionFactory;
-import org.apache.shiro.session.mgt.eis.MemorySessionDAO;
-import org.apache.shiro.session.mgt.eis.SessionDAO;
-import org.apache.shiro.subject.Subject;
-import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
-import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.cn.freamarker.session.RedisManager;
+import com.cn.freamarker.util.SerializeUtils;
 import com.cn.freamarker.web.controller.BaseController;
 
 @RequestMapping("/login")
 @Controller
 public class LoginController extends BaseController{
-	
-	@Resource MemorySessionDAO sessionDAO;
 	
 	/** 
 	 * 实际的登录代码 
@@ -43,64 +28,39 @@ public class LoginController extends BaseController{
 	 */  
 	@RequestMapping(value = "/dologin")  
 	public String doLogin(HttpServletRequest request, Model model) {  
-	    String msg = "";  
 	    String userName = request.getParameter("userName");  
 	    String password = request.getParameter("password");  
 	    System.out.println(userName);  
 	    System.out.println(password);  
-	    UsernamePasswordToken token = new UsernamePasswordToken(userName, password);  
-	    try {  
-	        SecurityUtils.getSubject().login(token);
-	        if (SecurityUtils.getSubject().isAuthenticated()) {  
-	        	Session session = SecurityUtils.getSubject().getSession();
-	        	SimpleSession simpleSession = new SimpleSession();
-	        	System.out.println(session.getHost());
-	        	simpleSession.setHost(session.getHost());
-	        	//FIXME 之前登录后依然sessionid在变更，是因为没有保存session
-	        	sessionDAO.create(simpleSession);
-	        	System.out.println(session.getId()+"==========");
-	        	session.setAttribute("userid", userName);
-	            return "redirect:index.do";  
-	        } else {  
-	            return "redirect:/";  
-	        }  
-	    } catch (IncorrectCredentialsException e) {  
-	        msg = "登录密码错误. Password for account " + token.getPrincipal() + " was incorrect.";  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (ExcessiveAttemptsException e) {  
-	        msg = "登录失败次数过多";  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (LockedAccountException e) {  
-	        msg = "帐号已被锁定. The account for username " + token.getPrincipal() + " was locked.";  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (DisabledAccountException e) {  
-	        msg = "帐号已被禁用. The account for username " + token.getPrincipal() + " was disabled.";  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (ExpiredCredentialsException e) {  
-	        msg = "帐号已过期. the account for username " + token.getPrincipal() + "  was expired.";  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (UnknownAccountException e) {  
-	        msg = "帐号不存在. There is no user with username of " + token.getPrincipal();  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    } catch (UnauthorizedException e) {  
-	        msg = "您没有得到相应的授权！" + e.getMessage();  
-	        model.addAttribute("message", msg);  
-	        System.out.println(msg);  
-	    }
-	    return "redirect:/";  
+    	HttpSession session = request.getSession();
+    	System.out.println(session.getId());
+    	if("admin".equals(userName)){
+    		Map<String,String> userBean = new HashMap<String,String>();
+    		userBean.put("user", userName);
+    		userBean.put("password", password);
+    		session.setAttribute("userBean",userBean);
+    		updateSession(session);
+    		return "redirect:index.do";  
+        } else {  
+            return "redirect:/";  
+        }  
 	}  
 	
 	@RequestMapping("/index")
 	public String index(){
-		Subject subject = SecurityUtils.getSubject();
-		System.out.println(subject.getSession().getAttribute("userid"));
-		setAttribuate("sessionid", subject.getSession().getId());
+//		System.out.println("request session id is "+getRequest().getSession().getId());
+//		System.out.println("user is "+getRequest().getSession().getAttribute("userBean"));
 		return "index";
 	}
+	
+	private void updateSession(HttpSession session){
+		RedisManager redisManager = new RedisManager();
+		String keyPrefix = "shiro_redis_session:";
+		String preKey = keyPrefix + session.getId();
+		byte[] key = preKey.getBytes();
+		byte[] value = SerializeUtils.serialize(session);
+		redisManager.set(key, value);
+		
+	}
+	
 }

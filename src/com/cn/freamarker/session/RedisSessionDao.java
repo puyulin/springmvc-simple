@@ -10,6 +10,8 @@ import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.session.mgt.eis.AbstractSessionDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.cn.freamarker.util.SerializeUtils;
 
@@ -23,7 +25,7 @@ public class RedisSessionDao extends AbstractSessionDAO {
 	 * shiro-redis的session对象前缀
 	 */
 	private RedisManager redisManager;
-
+	
 	/**
 	 * The Redis key prefix for the sessions
 	 */
